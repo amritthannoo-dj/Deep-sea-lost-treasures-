@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Deep Sea – Lost Treasures</title>
+<style>
+:root{--cyan:#66e4ef;--gold:#ffd36a;--panel:rgba(3,17,32,.86)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#031426;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;touch-action:none}
+canvas{display:block}#ui{position:fixed;inset:0;pointer-events:none}
+.top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pill{background:rgba(2,14,27,.78);border:1px solid rgba(130,220,240,.24);border-radius:13px;padding:8px 11px;backdrop-filter:blur(8px);font-size:12px;box-shadow:0 5px 20px #00101e55}
+.brand{font-weight:900;letter-spacing:.08em;color:#d9faff;font-size:13px}.brand span{color:var(--gold)}
+.stats{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.stat b{color:var(--gold);font-size:14px}
+#message{position:absolute;top:78px;left:50%;transform:translateX(-50%);padding:8px 13px;border-radius:12px;background:#041b2ddd;border:1px solid #7beaff55;font-size:12px;text-align:center;max-width:90%;white-space:normal}
+#bars{position:absolute;left:12px;top:74px;width:min(180px,42vw);display:grid;gap:7px}.barbox{font-size:10px;color:#d9f5ff}.bar{height:7px;background:#17364b;border-radius:8px;overflow:hidden;margin-top:3px}.fill{height:100%;width:100%;background:linear-gradient(90deg,#37c6d6,#9cf6ed);transition:width .2s}.fill.oxygen{background:linear-gradient(90deg,#ffb34d,#ffdf81)}.fill.health{background:linear-gradient(90deg,#e84f5f,#ff9a9a)}
+#controls{position:absolute;bottom:15px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-end}
+#stick{width:122px;height:122px;border-radius:50%;background:#b8ecff18;border:2px solid #b7eaff55;position:relative;pointer-events:auto;touch-action:none;box-shadow:inset 0 0 25px #66dfff18}
+#knob{position:absolute;width:48px;height:48px;border-radius:50%;left:35px;top:35px;background:#9eeaff55;border:2px solid #c5f7ff;box-shadow:0 0 18px #43dfff66}
+.actions{display:grid;grid-template-columns:repeat(2,66px);gap:8px;pointer-events:auto}
+.action{height:58px;border-radius:17px;border:1px solid #8deaff88;background:#06243bdd;color:#fff;font-weight:800;font-size:11px;box-shadow:0 5px 18px #00101e88;touch-action:manipulation}
+.action.primary{background:#086174e8;border-color:#8af5ff}.action.gold{background:#6d4a0be8;border-color:#ffdb83}
+#hint{position:absolute;bottom:145px;left:50%;transform:translateX(-50%);font-size:11px;color:#d4f8ff;text-align:center;text-shadow:0 2px 5px #001}
+.modal{pointer-events:auto;position:absolute;inset:0;background:linear-gradient(180deg,#031426dd,#031426f2);display:flex;align-items:center;justify-content:center;padding:18px}
+.card{width:min(520px,100%);max-height:90%;overflow:auto;background:linear-gradient(145deg,#0b2b43f5,#041625f5);border:1px solid #7eeaff55;border-radius:22px;padding:22px;box-shadow:0 18px 60px #0009}
+h1{font-size:clamp(25px,7vw,42px);line-height:1.05;margin:0 0 8px;letter-spacing:-.04em}h1 span{color:var(--gold)}h2{margin:0 0 10px;font-size:22px}p{color:#c5deeb;line-height:1.5;font-size:13px}
+.btn{border:0;border-radius:13px;padding:13px 16px;background:linear-gradient(100deg,#0b9eb0,#08748f);color:#fff;font-weight:900;width:100%;font-size:14px;margin-top:9px}
+.btn.secondary{background:#16374c;border:1px solid #6eb4ca}.btn.gold{background:linear-gradient(100deg,#9b6811,#d99a28);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.item{background:#0b2639;border:1px solid #4b829966;border-radius:13px;padding:10px;font-size:12px}.item b{display:block;color:#ffe09a;margin-bottom:4px}.item small{color:#b8d2e0}
+#shoplist{display:grid;gap:8px}.shoprow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;background:#0b2639;border:1px solid #4b829966;font-size:12px}.shoprow button{border:0;border-radius:9px;background:#167b91;color:white;padding:8px 10px;font-weight:800;white-space:nowrap}
+.hidden{display:none!important}
+@media(max-width:430px){.top{top:8px;left:8px;right:8px}.pill{padding:7px 9px}.brand{font-size:11px}.stat{font-size:10px}#bars{left:9px;top:68px}.actions{grid-template-columns:repeat(2,59px)}.action{height:53px}#stick{width:112px;height:112px}#knob{left:31px;top:31px}#hint{bottom:132px}}
+</style>
+</head>
+<body>
+<div id="ui">
+ <div class="top">
+  <div class="pill brand">DEEP SEA <span>• LOST TREASURES</span></div>
+  <div class="stats">
+   <div class="pill stat">GOLD <b id="money">0</b></div>
+   <div class="pill stat">BAG <b id="bag">0/12</b></div>
+   <div class="pill stat">DEPTH <b id="depth">0m</b></div>
+  </div>
+ </div>
+ <div id="bars">
+  <div class="barbox">OXYGEN <div class="bar"><div class="fill oxygen" id="oxygenbar"></div></div></div>
+  <div class="barbox">DIVER HEALTH <div class="bar"><div class="fill health" id="healthbar"></div></div></div>
+ </div>
+ <div id="message">Explore the reef. Collect treasure and watch for sharks.</div>
+ <div id="hint">Left joystick: swim • Drag right side: look around</div>
+ <div id="controls">
+  <div id="stick"><div id="knob"></div></div>
+  <div class="actions">
+   <button class="action primary" id="dive">DIVE</button>
+   <button class="action" id="rise">RISE</button>
+   <button class="action gold" id="collect">COLLECT</button>
+   <button class="action" id="boat">BOAT</button>
+  </div>
+ </div>
+ <div class="modal" id="start">
+  <div class="card">
+   <div class="brand">OCEAN EXPEDITION • 01</div>
+   <h1>DEEP SEA<br><span>LOST TREASURES</span></h1>
+   <p>Set out from your exploration vessel, dive into mysterious waters, recover lost treasures and return before your oxygen runs out. Watch for sharks!</p>
+   <div class="grid">
+    <div class="item"><b>🧭 Explore</b><small>Search reefs, wrecks and caves</small></div>
+    <div class="item"><b>🦈 Survive</b><small>Avoid sharks and manage oxygen</small></div>
+    <div class="item"><b>💰 Trade</b><small>Sell treasure at your ship</small></div>
+    <div class="item"><b>⚙ Upgrade</b><small>Improve your diving equipment</small></div>
+   </div>
+   <button class="btn" id="startbtn">START EXPEDITION</button>
+   <p style="font-size:10px;margin-bottom:0">Mobile: use the joystick to swim, drag the right side to turn, and use the action buttons. Desktop: WASD / arrows, mouse drag, E to collect.</p>
+  </div>
+ </div>
+ <div class="modal hidden" id="boatmodal">
+  <div class="card">
+   <div class="brand">YOUR EXPLORATION VESSEL</div><h2>Back aboard!</h2>
+   <p id="boatstats">Your treasure is ready to unload.</p>
+   <div class="grid">
+    <div class="item"><b>🪙 Sell treasure</b><small>Convert your haul into expedition funds.</small></div>
+    <div class="item"><b>🛠 Equipment</b><small>Prepare for longer, deeper dives.</small></div>
+   </div>
+   <button class="btn gold" id="sell">UNLOAD & SELL TREASURE</button>
+   <h2 style="font-size:16px;margin-top:18px">Equipment shop</h2>
+   <div id="shoplist"></div>
+   <button class="btn" id="redive">DIVE AGAIN</button>
+   <button class="btn secondary" id="closeboat">CLOSE</button>
+  </div>
+ </div>
+ <div class="modal hidden" id="unlockmodal">
+  <div class="card"><div class="brand">NEW EXPEDITION AREA</div><h2 id="unlocktitle">Location unlocked</h2><p id="unlockdesc"></p><button class="btn" id="unlockok">LET'S EXPLORE</button></div>
+ </div>
+ <div class="modal hidden" id="gameover">
+  <div class="card"><div class="brand">EXPEDITION REPORT</div><h2>Dive ended</h2><p id="endtext">Your oxygen ran out. Return to the ship to prepare for another dive.</p><button class="btn" id="restart">RETURN TO VESSEL</button></div>
+ </div>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const $=id=>document.getElementById(id);
+let scene,camera,renderer,clock,diver,ship,shark,treasures=[],bubbles=[],fish=[],rocks=[];
+let mode='intro',money=0,bag=0,bagCap=12,oxygen=100,health=100,depth=0,speed=5,oxygenMax=100,protection=0;
+let yaw=0,pitch=-0.12,joy={x:0,y:0},keys={},lastCollect=0,location=0,inventory=[],sharkCooldown=0,worldTime=0;
+const locations=[
+ {name:'Coral Reef',depth:18,unlock:0,desc:'A bright reef with scattered coins, jewellery and small relics.'},
+ {name:'Pirate Ship',depth:38,unlock:180,desc:'A forgotten pirate wreck holding valuable gold and rare artefacts.'},
+ {name:'Lost Cargo',depth:62,unlock:500,desc:'A damaged cargo vessel. Watch for larger sharks around the containers.'},
+ {name:'Deep Caves',depth:95,unlock:1100,desc:'Dark underwater passages filled with rare discoveries.'},
+ {name:'Lost City',depth:140,unlock:2400,desc:'Ancient ruins at the edge of the deep. Only expert divers should enter.'}
+];
+const upgrades=[
+ {id:'bag',name:'Expanded treasure bag',desc:'+8 carrying capacity',cost:100,apply(){bagCap+=8}},
+ {id:'tank',name:'High-capacity oxygen tank',desc:'+35% oxygen per dive',cost:140,apply(){oxygenMax+=35;oxygen=oxygenMax}},
+ {id:'fins',name:'Streamlined dive fins',desc:'Swim faster',cost:160,apply(){speed+=1.2}},
+ {id:'suit',name:'Reinforced dive suit',desc:'More protection from sharks',cost:220,apply(){protection=Math.min(3,protection+1)}},
+ {id:'light',name:'Deep-water flashlight',desc:'Brighter visibility in dark areas',cost:190,apply(){scene.fog.density=Math.max(.006,scene.fog.density-.0015)}}
+];
+function init(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x72c7d9);scene.fog=new THREE.FogExp2(0x075071,.009);
+ camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,900);
+ renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0x9cecff,0x071a2c,1.5));
+ const sun=new THREE.DirectionalLight(0xffe7c2,2.2);sun.position.set(-40,70,20);scene.add(sun);
+ const water=new THREE.Mesh(new THREE.PlaneGeometry(1000,1000),new THREE.MeshStandardMaterial({color:0x087b9d,roughness:.22,metalness:.12,transparent:true,opacity:.8}));water.rotation.x=-Math.PI/2;water.position.y=0;scene.add(water);
+ const seabed=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({color:0x183d43,roughness:1}));seabed.rotation.x=-Math.PI/2;seabed.position.y=-34;scene.add(seabed);
+ addSeafloor();createShip();createDiver();createShark();createTreasures();createFish();createBubbles();
+ clock=new THREE.Clock();window.addEventListener('resize',resize);bindControls();animate();
+}
+function mat(c,rough=.8,metal=0){return new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal})}
+function box(parent,x,y,z,sx,sy,sz,m){let o=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),m);o.position.set(x,y,z);parent.add(o);return o}
+function sphere(parent,x,y,z,r,m){let o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);parent.add(o);return o}
+function addSeafloor(){
+ const sand=mat(0x987b53),coralM=[mat(0xe26d65),mat(0xe7a85d),mat(0x9c76c4),mat(0x3ca99e)];
+ for(let i=0;i<75;i++){let x=(Math.random()-.5)*120,z=(Math.random()-.5)*120;let h=1+Math.random()*4;let c=new THREE.Group();c.position.set(x,-33,z);scene.add(c);for(let j=0;j<3;j++){let limb=new THREE.Mesh(new THREE.CylinderGeometry(.12,.28,h*(.6+Math.random()),7),coralM[i%4]);limb.position.set((Math.random()-.5)*1.2,h*.25,(Math.random()-.5)*1.2);limb.rotation.z=(Math.random()-.5)*.6;c.add(limb)}}
+ for(let i=0;i<55;i++){let x=(Math.random()-.5)*130,z=(Math.random()-.5)*130;let r=.5+Math.random()*2;sphere(scene,x,-33.5,z,r,sand)}
+ // distant wreck silhouette
+ const wreck=new THREE.Group();wreck.position.set(14,-29,-34);wreck.rotation.y=-.25;scene.add(wreck);
+ box(wreck,0,0,0,19,4,7,mat(0x493d31));box(wreck,0,2.4,-1,10,1.2,6,mat(0x574638));
+ for(let i=0;i<5;i++){let p=box(wreck,-7+i*3,2.2,3.3,.25,3,.3,mat(0x77604a));p.rotation.z=.12}
+ for(let i=0;i<7;i++){let c=sphere(scene,-25+i*8,-31,-20-Math.random()*20,1.4,coralM[i%4]);c.scale.set(1,1.5,1)}
+}
+function createShip(){
+ ship=new THREE.Group();ship.position.set(0,0,-12);scene.add(ship);
+ const hull=mat(0x3b2630,.5),deck=mat(0x9b7651),white=mat(0xd5d8d0),dark=mat(0x253846),gold=mat(0xd39b3d,.3,.65);
+ let h=box(ship,0,0,0,13,2.5,25,hull);h.position.y=-.5;let d=box(ship,0,.85,0,12.2,.35,23,deck);
+ box(ship,0,2.1,-4,7,2.5,7,white);box(ship,0,3.5,-4,5,.45,5,dark);
+ box(ship,0,4.8,1,.35,7,.35,deck);box(ship,0,7,1,.18,4,.18,gold);
+ box(ship,-3,2.2,7,1.3,1.4,2,mat(0x344e5b));box(ship,3,2.2,7,1.3,1.4,2,mat(0x344e5b));
+ for(let i=-2;i<=2;i++){box(ship,i*1.3,1.2,10,1,.2,1.5,gold)}
+ const flag=box(ship,0,8.8,1,2,.8,.08,mat(0xc74c40));flag.rotation.y=.1;
+ for(let i=0;i<3;i++){let w=sphere(ship,-5+i*5,-.1,12,1.2,mat(0x1d4655));w.scale.set(1,.55,.55)}
+}
+function createDiver(){
+ diver=new THREE.Group();scene.add(diver);
+ const suit=mat(0xe05a32,.55),black=mat(0x152a36),glass=new THREE.MeshStandardMaterial({color:0x73d9e9,metalness:.7,roughness:.12}),yellow=mat(0xf2c64c);
+ sphere(diver,0,1.55,0,.48,black);sphere(diver,0,1.58,.34,.28,glass);
+ let body=new THREE.Mesh(new THREE.CylinderGeometry(.38,.48,1.35,12),suit);body.position.y=.55;diver.add(body);
+ let tank=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,1.35,12),yellow);tank.position.set(0,.7,-.48);diver.add(tank);
+ for(let s of [-1,1]){let arm=new THREE.Mesh(new THREE.CylinderGeometry(.13,.16,.95,10),suit);arm.position.set(s*.48,.55,0);arm.rotation.z=s*.35;diver.add(arm);let leg=new THREE.Mesh(new THREE.CylinderGeometry(.17,.2,.85,10),black);leg.position.set(s*.2,-.55,0);diver.add(leg);let fin=box(diver,s*.2,-1.02,.38,.38,.12,.9,mat(0xffa72e));fin.rotation.x=-.12}
+ diver.position.set(0,-3,-1);diver.visible=false;
+}
+function createShark(){
+ shark=new THREE.Group();scene.add(shark);const skin=mat(0x536c7d,.45),white=mat(0xc5d1d3),eye=mat(0x050b10);
+ let body=new THREE.Mesh(new THREE.CapsuleGeometry(.72,3.3,5,12),skin);body.rotation.z=Math.PI/2;shark.add(body);
+ let belly=new THREE.Mesh(new THREE.CapsuleGeometry(.5,2.9,5,12),white);belly.rotation.z=Math.PI/2;belly.position.y=-.35;shark.add(belly);
+ let tail=box(shark,-2.3,0,0,.2,1.8,.18,skin);tail.rotation.z=.3;
+ let fin=new THREE.Mesh(new THREE.ConeGeometry(.7,1.3,4),skin);fin.position.set(-.4,.9,0);fin.rotation.z=.2;shark.add(fin);
+ for(let s of [-1,1])sphere(shark,1.1,.15,s*.53,.09,eye);
+ shark.position.set(18,-14,-20);shark.visible=false;
+}
+function createTreasures(){
+ const gold=mat(0xffc43d,.24,.72),silver=mat(0xc6dce6,.22,.8),gem=mat(0x21d6ca,.18,.4),wood=mat(0x69442c);
+ for(let i=0;i<36;i++){
+  let g=new THREE.Group();let type=i%5;
+  if(type===0){let coin=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.09,20),gold);coin.rotation.x=Math.PI/2;g.add(coin)}
+  else if(type===1){let gemm=new THREE.Mesh(new THREE.OctahedronGeometry(.42),gem);gemm.scale.set(.8,1.2,.8);g.add(gemm)}
+  else if(type===2){box(g,0,0,0,.9,.65,.7,wood);box(g,0,.34,0,1,.12,.78,gold);for(let s of [-1,1])box(g,s*.34,.42,0,.08,.1,.8,gold)}
+  else if(type===3){let ring=new THREE.Mesh(new THREE.TorusGeometry(.36,.12,10,24),gold);g.add(ring);sphere(g,0,.34,0,.19,gem)}
+  else{let coin=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.08,18),silver);coin.rotation.x=Math.PI/2;g.add(coin)}
+  let x=(Math.random()-.5)*70,z=(Math.random()-.5)*75-5;g.position.set(x,-31+Math.random()*1.2,z);g.userData={value:[10,18,45,28,14][type],type,got:false};scene.add(g);treasures.push(g);
+ }
+}
+function createFish(){for(let i=0;i<18;i++){let f=new THREE.Group();let m=mat([0x59c6c4,0xf1b55b,0x7e9edb][i%3]);let b=new THREE.Mesh(new THREE.SphereGeometry(.28,10,8),m);b.scale.set(1.6,.65,.6);f.add(b);let t=box(f,-.48,0,0,.45,.5,.08,m);t.rotation.z=.5;f.position.set((Math.random()-.5)*75,-8-Math.random()*22,(Math.random()-.5)*75);scene.add(f);fish.push(f)}}
+function createBubbles(){let m=new THREE.MeshBasicMaterial({color:0xb9f8ff,transparent:true,opacity:.45});for(let i=0;i<70;i++){let b=new THREE.Mesh(new THREE.SphereGeometry(.07+Math.random()*.08,8,6),m);b.position.set((Math.random()-.5)*65,-Math.random()*30,(Math.random()-.5)*65);scene.add(b);bubbles.push(b)}}
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}
+function bindControls(){
+ const stick=$('stick'),knob=$('knob');let active=false,cx=0,cy=0;
+ function move(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),len=Math.min(42,Math.hypot(dx,dy)),a=Math.atan2(dy,dx);joy.x=Math.cos(a)*len/42;joy.y=Math.sin(a)*len/42;knob.style.transform=`translate(${joy.x*36}px,${joy.y*36}px)`}
+ stick.addEventListener('pointerdown',e=>{active=true;stick.setPointerCapture(e.pointerId);move(e)});stick.addEventListener('pointermove',e=>{if(active)move(e)});function release(){active=false;joy.x=joy.y=0;knob.style.transform=''}
+ stick.addEventListener('pointerup',release);stick.addEventListener('pointercancel',release);
+ let look=false,lastX=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{if(e.clientX>innerWidth*.38){look=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)}});renderer.domElement.addEventListener('pointermove',e=>{if(look){yaw-=(e.clientX-lastX)*.006;pitch=Math.max(-.8,Math.min(.45,pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY}});renderer.domElement.addEventListener('pointerup',()=>look=false);renderer.domElement.addEventListener('pointercancel',()=>look=false);
+ $('dive').onclick=()=>{if(mode==='diving')diver.position.y-=2.5};$('rise').onclick=()=>{if(mode==='diving')diver.position.y=Math.min(-1,diver.position.y+3)};
+ $('collect').onclick=collectNearby;$('boat').onclick=returnToBoat;
+ $('startbtn').onclick=()=>{mode='diving';diver.visible=true;diver.position.set(0,-4,-1);yaw=0;$('start').classList.add('hidden');msg('Dive started! Search the seabed for treasure.');};
+ $('sell').onclick=()=>{let total=inventory.reduce((a,v)=>a+v,0);money+=total;inventory=[];bag=0;updateHUD();$('boatstats').textContent=`Treasure sold for ${total} gold. Your bag is empty and ready for another dive.`;msg(`Sold your treasure for ${total} gold.`);unlockCheck();renderShop()};
+ $('redive').onclick=()=>{if(mode==='boat'){mode='diving';diver.visible=true;diver.position.set(0,-4,-1);oxygen=oxygenMax;health=100;$('boatmodal').classList.add('hidden');msg('Back underwater. Good hunting!')}};
+ $('closeboat').onclick=()=>$('boatmodal').classList.add('hidden');
+ $('unlockok').onclick=()=>$('unlockmodal').classList.add('hidden');
+ $('restart').onclick=()=>{mode='boat';$('gameover').classList.add('hidden');openBoat()};
+ window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()==='e')collectNearby()});window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+}
+function msg(t){$('message').textContent=t}
+function updateHUD(){$('money').textContent=money;$('bag').textContent=`${bag}/${bagCap}`;$('depth').textContent=Math.max(0,Math.round(-diver.position.y))+'m';$('oxygenbar').style.width=(oxygen/oxygenMax*100)+'%';$('healthbar').style.width=health+'%'}
+function collectNearby(){if(mode!=='diving')return;let near=null,dist=4;for(let t of treasures){if(!t.userData.got){let d=t.position.distanceTo(diver.position);if(d<dist){dist=d;near=t}}}if(near){if(bag>=bagCap){msg('Your treasure bag is full! Return to the ship.');return}near.userData.got=true;near.visible=false;bag++;inventory.push(near.userData.value);msg(`Treasure collected! +${near.userData.value} gold value.`);updateHUD()}else msg('Swim closer to a treasure and tap COLLECT.')}
+function returnToBoat(){if(mode!=='diving')return;let d=diver.position.distanceTo(new THREE.Vector3(0,-1,-12));if(d<13&&diver.position.y>-7){mode='boat';diver.visible=false;openBoat()}else{msg('Swim up to the ship to return. The BOAT button only works near the vessel.');}}
+function openBoat(){$('boatmodal').classList.remove('hidden');$('boatstats').textContent=`You are carrying ${bag} treasures worth ${inventory.reduce((a,v)=>a+v,0)} gold. Current funds: ${money} gold.`;renderShop()}
+function renderShop(){$('shoplist').innerHTML='';upgrades.forEach(u=>{let row=document.createElement('div');row.className='shoprow';let info=document.createElement('div');info.innerHTML=`<b>${u.name}</b><br><span style="color:#b8d2e0">${u.desc} • ${u.cost} gold</span>`;let b=document.createElement('button');b.textContent='BUY';b.disabled=money<u.cost;b.style.opacity=b.disabled?'.45':'1';b.onclick=()=>{if(money>=u.cost){money-=u.cost;u.apply();msg(`${u.name} purchased.`);updateHUD();renderShop()}};row.append(info,b);$('shoplist').append(row)})}
+function unlockCheck(){for(let i=location+1;i<locations.length;i++){if(money>=locations[i].unlock){location=i;$('unlocktitle').textContent=locations[i].name+' unlocked!';$('unlockdesc').textContent=locations[i].desc;$('unlockmodal').classList.remove('hidden');msg('New dive location unlocked!');break}}}
+function animate(){
+ requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);worldTime+=dt;
+ ship.position.y=Math.sin(worldTime*1.3)*.16;
+ fish.forEach((f,i)=>{f.position.x+=Math.sin(worldTime*.8+i)*dt*.6;f.rotation.y=Math.sin(worldTime+i)*.4});
+ bubbles.forEach(b=>{b.position.y+=dt*(.6+b.scale.x);if(b.position.y>1)b.position.y=-32});
+ if(mode==='diving'){
+  let forward=-(joy.y||((keys.w||keys.arrowup)?1:0)-((keys.s||keys.arrowdown)?1:0));
+  let sideways=joy.x||((keys.d||keys.arrowright)?1:0)-((keys.a||keys.arrowleft)?1:0);
+  if(Math.abs(forward)+Math.abs(sideways)>.05){let dx=Math.sin(yaw)*forward+Math.cos(yaw)*sideways,dz=Math.cos(yaw)*forward-Math.sin(yaw)*sideways;diver.position.x+=dx*speed*dt;diver.position.z+=dz*speed*dt;diver.rotation.y=Math.atan2(dx,dz);diver.position.y+=Math.sin(worldTime*7)*dt*.12}
+  diver.position.x=THREE.MathUtils.clamp(diver.position.x,-75,75);diver.position.z=THREE.MathUtils.clamp(diver.position.z,-80,65);diver.position.y=THREE.MathUtils.clamp(diver.position.y,-locations[location].depth-8,-1.2);
+  oxygen=Math.max(0,oxygen-dt*(.75+Math.max(0,-diver.position.y)/100));if(oxygen<=0){health-=dt*14;if(health<=0){mode='ended';$('endtext').textContent='You ran out of oxygen. Your carried treasure was lost. Return to the vessel and prepare another dive.';$('gameover').classList.remove('hidden')}}
+  let sharkTarget=diver.position.clone().add(new THREE.Vector3(Math.sin(worldTime*.7)*3.2,Math.sin(worldTime*1.1)*1.8,Math.cos(worldTime*.7)*3.2));shark.visible=true;shark.position.lerp(sharkTarget,dt*.22);shark.lookAt(diver.position);sharkCooldown-=dt;
+  if(shark.position.distanceTo(diver.position)<3.3&&sharkCooldown<=0){health=Math.max(0,health-(18-protection*5));sharkCooldown=2.5;msg('SHARK ATTACK! Swim away!');if(health<=0){mode='ended';$('endtext').textContent='A shark ended your dive. Your carried treasure was lost.';$('gameover').classList.remove('hidden')}}
+  if(bag>=bagCap)msg('BAG FULL! Return to the ship to sell your treasure.');
+  if(diver.position.distanceTo(new THREE.Vector3(0,-1,-12))<10&&diver.position.y>-7)msg('You are near the boat. Tap BOAT to unload and sell.');
+  camera.position.set(diver.position.x-Math.sin(yaw)*9,diver.position.y+4+pitch*5,diver.position.z-Math.cos(yaw)*9);let lookAt=diver.position.clone().add(new THREE.Vector3(Math.sin(yaw)*5,1,Math.cos(yaw)*5));camera.lookAt(lookAt);
+ }else if(mode==='boat'||mode==='intro'){camera.position.lerp(new THREE.Vector3(22,13,20),.025);camera.lookAt(0,0,-7);shark.visible=false}
+ updateHUD();renderer.render(scene,camera);
+}
+init();
+</script>
+</body>
+</html>
